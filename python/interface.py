@@ -3,7 +3,7 @@ from tkinter import ttk , messagebox , scrolledtext
 import threading
 import queue
 
-from configuration import (URI_DEFAUT , UTILISATEUR_DEFAUT , MOT_DE_PASSE_DEFAUT , REQUETES_IMPORTATION , REQUETES_ANALYSE , REQUETES_GDS ,)
+from configuration import (URI_DEFAUT , UTILISATEUR_DEFAUT , MOT_DE_PASSE_DEFAUT , REQUETES_IMPORTATION , REQUETES_ANALYSE , REQUETES_GDS , REQUETES_INCREMENTALES ,)
 from connexion import ConnexionNeo4j
 
 
@@ -22,7 +22,6 @@ class FenetrePrincipale(tk.Tk) :
         self.construire_barre_connexion()
         self.construire_zone_principale()
         self.verifier_file_attente()
-
 
     def construire_barre_connexion(self) :
         barre = tk.LabelFrame(self , text="Connexion Neo4j" , bg="#f0f0f0" , font=("Arial" , 10 , "bold") , fg="#1B4F8A")
@@ -43,8 +42,7 @@ class FenetrePrincipale(tk.Tk) :
         self.champ_mot_de_passe.insert(0 , MOT_DE_PASSE_DEFAUT)
         self.champ_mot_de_passe.grid(row=0 , column=5 , padx=2)
 
-        self.bouton_connexion = tk.Button( barre , text="Connecter" ,
-            font=("Arial" , 10 , "bold") , bg="#2E75B6" , fg="white" , relief="flat" , padx=12,
+        self.bouton_connexion = tk.Button(barre , text="Connecter" , font=("Arial" , 10 , "bold") , bg="#2E75B6" , fg="white" , relief="flat" , padx=12 ,
             command=self.lancer_connexion)
         self.bouton_connexion.grid(row=0 , column=6 , padx=(12 , 4))
 
@@ -71,19 +69,39 @@ class FenetrePrincipale(tk.Tk) :
         groupes = [
             ("Importation" , REQUETES_IMPORTATION),
             ("Analyse" , REQUETES_ANALYSE),
-            ("GDS" , REQUETES_GDS),]
+            ("GDS" , REQUETES_GDS),
+            ("Incremental" , REQUETES_INCREMENTALES),]
         for titre , dictionnaire in groupes :
             cadre_onglet = tk.Frame(onglets , bg="#ffffff")
             onglets.add(cadre_onglet , text=titre)
             self.remplir_onglet(cadre_onglet , dictionnaire)
 
     def remplir_onglet(self , parent , dictionnaire_requetes) :
-        cadre_interne = tk.Frame(parent , bg="#ffffff")
-        cadre_interne.pack(fill="both" , expand=True , padx=6 , pady=6)
+        # cadre defilant pour les onglets avec beaucoup de requetes
+        cadre_externe = tk.Frame(parent , bg="#ffffff")
+        cadre_externe.pack(fill="both" , expand=True)
+
+        defilement = tk.Scrollbar(cadre_externe , orient="vertical")
+        defilement.pack(side="right" , fill="y")
+
+        canvas = tk.Canvas(cadre_externe , bg="#ffffff" , yscrollcommand=defilement.set , highlightthickness=0)
+        canvas.pack(side="left" , fill="both" , expand=True)
+        defilement.config(command=canvas.yview)
+
+        cadre_interne = tk.Frame(canvas , bg="#ffffff")
+        fenetre_canvas = canvas.create_window((0 , 0) , window=cadre_interne , anchor="nw")
+
+        def ajuster_largeur(event) :
+            canvas.itemconfig(fenetre_canvas , width=event.width)
+        canvas.bind("<Configure>" , ajuster_largeur)
+
+        def mettre_a_jour_scroll(event) :
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        cadre_interne.bind("<Configure>" , mettre_a_jour_scroll)
 
         for nom , contenu in dictionnaire_requetes.items() :
             cadre_bouton = tk.Frame(cadre_interne , bg="#ffffff" , relief="groove" , bd=1)
-            cadre_bouton.pack(fill="x" , pady=3)
+            cadre_bouton.pack(fill="x" , pady=3 , padx=4)
 
             tk.Label(cadre_bouton , text=nom , bg="#ffffff" , font=("Arial" , 10 , "bold") , fg="#1B4F8A" , anchor="w"
             ).pack(fill="x" , padx=8 , pady=(6 , 0))
@@ -97,8 +115,8 @@ class FenetrePrincipale(tk.Tk) :
             ).pack(anchor="e" , padx=8 , pady=(0 , 6))
 
     def construire_zone_resultat(self , parent) :
-        self.label_titre_requete = tk.Label(parent , text="Aucune requete executee" ,
-            bg="#f0f0f0" , font=("Arial" , 12 , "bold") , fg="#1B4F8A" , anchor="w")
+        self.label_titre_requete = tk.Label(parent , text="Aucune requete executee" , bg="#f0f0f0" , font=("Arial" , 12 , "bold") ,
+            fg="#1B4F8A" , anchor="w")
         self.label_titre_requete.pack(fill="x" , pady=(0 , 4))
 
         cadre_tableau = tk.Frame(parent , bg="#f0f0f0")
@@ -113,18 +131,15 @@ class FenetrePrincipale(tk.Tk) :
         defilement_h.pack(side="bottom" , fill="x")
         self.tableau.pack(fill="both" , expand=True)
 
-        self.label_nb_resultats = tk.Label(parent , text="" ,
-            bg="#f0f0f0" , font=("Arial" , 9) , fg="#555555" , anchor="w")
+        self.label_nb_resultats = tk.Label(parent , text="" , bg="#f0f0f0" , font=("Arial" , 9) , fg="#555555" , anchor="w")
         self.label_nb_resultats.pack(fill="x" , pady=(4 , 0))
 
-        tk.Label(parent , text="Journal d'execution" ,
-            bg="#f0f0f0" , font=("Arial",9,"bold") , fg="#555555" , anchor="w"
+        tk.Label(parent , text="Journal d'execution" , bg="#f0f0f0" , font=("Arial" , 9 , "bold") , fg="#555555" , anchor="w"
         ).pack(fill="x" , pady=(8 , 0))
 
-        self.console = scrolledtext.ScrolledText(parent , height=7 , state="disabled" ,
-            font=("Courier" , 9) , bg="#1a1a1a" , fg="#00cc66" , insertbackground="white")
+        self.console = scrolledtext.ScrolledText(parent , height=7 , state="disabled" , font=("Courier" , 9) ,
+                                                  bg="#1a1a1a" , fg="#00cc66" , insertbackground="white")
         self.console.pack(fill="x" , pady=(2 , 0))
-
 
     def lancer_connexion(self) :
         uri = self.champ_uri.get().strip()
@@ -135,14 +150,13 @@ class FenetrePrincipale(tk.Tk) :
         self.bouton_connexion.config(state="disabled")
 
         def tache() :
-            try:
+            try :
                 self.connexion.connecter(uri , utilisateur , mot_de_passe)
                 self.file_attente.put(("connexion_ok" , None))
-            except Exception as erreur:
+            except Exception as erreur :
                 self.file_attente.put(("connexion_erreur" , str(erreur)))
 
         threading.Thread(target=tache , daemon=True).start()
-
 
     def lancer_requete(self , nom_requete , texte_requete) :
         if not self.connexion.est_connecte() :
@@ -154,10 +168,10 @@ class FenetrePrincipale(tk.Tk) :
         self.vider_tableau()
 
         def tache() :
-            try:
+            try :
                 enregistrements , resume = self.connexion.executer(texte_requete)
                 self.file_attente.put(("requete_ok" , (nom_requete , enregistrements , resume)))
-            except Exception as erreur:
+            except Exception as erreur :
                 self.file_attente.put(("requete_erreur" , str(erreur)))
 
         threading.Thread(target=tache , daemon=True).start()
@@ -172,7 +186,6 @@ class FenetrePrincipale(tk.Tk) :
             self.tableau.column("information" , width=500 , anchor="w")
             for ligne in lignes_resume :
                 self.tableau.insert("" , "end" , values=(ligne,))
-
             self.label_nb_resultats.config(text=f"{len(lignes_resume)} information(s)")
             self.journaliser(f"OK -- {nom_requete}")
             return
@@ -203,8 +216,8 @@ class FenetrePrincipale(tk.Tk) :
         self.console.config(state="disabled")
 
     def verifier_file_attente(self) :
-        try:
-            while True:
+        try :
+            while True :
                 type_message , donnees = self.file_attente.get_nowait()
 
                 if type_message == "connexion_ok" :
