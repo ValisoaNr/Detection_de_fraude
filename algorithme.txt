@@ -1,0 +1,11 @@
+Le but de cette algorithme est d'identifier les étudiants consommanteurs et les vendeurs dans une université selon ces fichiers dans donnee/ .
+
+Pour debuter on a une liste d'étudiant avec quelques caractéristiques et une autre qui contient leurs relations
+
+Donc ,	on doit parcourir la liste des étudiants , selon les caractères susceptibles d'etre drogueurs , on lui donne une valeur selon le degré 
+ 	puis , avec les substances qu'il declare , une autre valeur (0 ou 1) qui indique qu'il est un drogueurs ou pas [ Initialisation ]
+	lier les données de relation à une graphe qui donnera une score à chaque étudiants vue leurs relations amicales avec des drogueurs selon ami , ami proche , connaissance
+	
+Puis ,	Combiner les resultats obtenus pour obtenir une valeur finale
+	definir un seuil pour la valeur finale qui determinera si un étudiant est un consommateur
+	En deduire que le vendeur peut être l'ami en commun de tous les consommateurs
