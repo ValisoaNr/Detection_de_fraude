@@ -10,6 +10,8 @@ Puis ,	Combiner les resultats obtenus pour obtenir une valeur finale
 	definir un seuil pour la valeur finale qui determinera si un etudiant est un consommateur
 	En deduire que le vendeur peut être l'ami en commun de tous les consommateurs
 
+///////////////////////////////////////////////////////////////
+
 Algorithme : Detection_consommateurs_vendeurs_de_drogues 
 Entrees :  
 	- liste_etudiants <- tableau d'etudiants avec leurs caractéristiques  
