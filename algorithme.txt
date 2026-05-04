@@ -1,11 +1,100 @@
-Le but de cette algorithme est d'identifier les étudiants consommanteurs et les vendeurs dans une université selon ces fichiers dans donnee/ .
+Le but de cette algorithme est d'identifier les etudiants consommanteurs et les vendeurs dans une université selon ces fichiers dans donnee/ .
 
-Pour debuter on a une liste d'étudiant avec quelques caractéristiques et une autre qui contient leurs relations
+Pour debuter on a une liste d'etudiant avec quelques caractéristiques et une autre qui contient leurs relations
 
-Donc ,	on doit parcourir la liste des étudiants , selon les caractères susceptibles d'etre drogueurs , on lui donne une valeur selon le degré 
+Donc ,	on doit parcourir la liste des etudiants , selon les caractères susceptibles d'etre drogueurs , on lui donne une score selon le degré 
  	puis , avec les substances qu'il declare , une autre valeur (0 ou 1) qui indique qu'il est un drogueurs ou pas [ Initialisation ]
-	lier les données de relation à une graphe qui donnera une score à chaque étudiants vue leurs relations amicales avec des drogueurs selon ami , ami proche , connaissance
+	lier les données de relation à une graphe qui donnera une valeur à chaque etudiants vue leurs relations amicales avec des drogueurs selon ami , ami proche , connaissance
 	
 Puis ,	Combiner les resultats obtenus pour obtenir une valeur finale
-	definir un seuil pour la valeur finale qui determinera si un étudiant est un consommateur
+	definir un seuil pour la valeur finale qui determinera si un etudiant est un consommateur
 	En deduire que le vendeur peut être l'ami en commun de tous les consommateurs
+
+Algorithme : Detection_consommateurs_vendeurs_de_drogues 
+Entrees :  
+	- liste_etudiants <- tableau d'etudiants avec leurs caractéristiques  
+	- liste_relations <- liste de triplets (e1 , e2 , type_lien)
+	- seuil_S <- valeur limite de décision  
+	- alpha , beta <- coefficients de pondération (avec alpha + beta = 1)
+
+Sortie : classification de chaque etudiant (consommateur / non classé) + liste des vendeurs suspects
+
+
+DEBUT :
+
+// Phase 1 — Initialisation des scores individuels
+
+
+POUR chaque etudiant e DANS liste_etudiants FAIRE
+    // Attribuer une valeur selon les caracteristiques
+    // susceptibles d'indiquer une consommation
+    score_comportement(e) <- Calculer_Poids_Caracteres(e)
+
+    SI e declare une substance ALORS
+        score_substance(e) <- 1
+    SINON
+        score_substance(e) <- 0
+    FIN SI
+
+    score_init(e) <- score_comportement(e) + score_substance(e)
+FIN POUR
+
+
+// Phase 2 — Construction du graphe de relations
+
+
+Initialiser graphe G avec V = ensemble des etudiants
+
+POUR chaque relation (e1 , e2 , type) DANS liste_relations FAIRE
+    SI type = "ami_proche"  ALORS
+    	poids <- 3
+    SINON SI type = "ami"   ALORS
+    	poids <- 2
+    SINON
+    	poids <- 1  // connaissance
+    FIN SI
+    Ajouter_arete(e1 , e2 , poids , G)
+FIN POUR
+
+
+// Phase 3 — Score social basee sur le voisinage
+
+
+POUR chaque etudiant e FAIRE
+    score_social(e) <- 0
+    POUR chaque voisin v de e DANS G FAIRE
+        score_social(e) <- score_social(e) + (poids(e,v) * score_init(v))
+    FIN POUR
+FIN POUR
+
+
+// Phase 4 — Combinaison et decision
+
+
+POUR chaque etudiant e FAIRE
+    score_final(e) <- (alpha * score_init(e)) + (beta * score_social(e))
+
+    SI score_final(e) >= seuil_S ALORS
+        Classifier(e , CONSOMMATEUR)
+    SINON
+        Classifier(e , NON_CLASSE)
+    FIN SI
+FIN POUR
+
+
+// Phase 5 — Detection des vendeurs potentiels
+
+
+POUR chaque etudiant e FAIRE
+    SI nombre_voisin_consommateur(e) >= k ALORS
+        Signaler(e , VENDEUR_POTENTIEL)
+    FIN SI
+FIN POUR
+
+
+FIN
+
+
+N.B :	- k est le nombre minimal de consommateurs en commun pour suspecter un vendeur ; à calibrer selon le contexte.
+        - Les poids alpha , beta ainsi que seuil_S sont des paramètres ajustables selon les données de test.
+        - La fonction Calculer_Poids_Caracteres(e) est à définir séparement selon la grille de critères retenus.
