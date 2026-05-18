@@ -1,0 +1,39 @@
+name,description,query,id,parentId,isFolder
+Importation,,,0,,true
+toutSuppr,,MATCH (n) DETACH DELETE n;,1,0,false
+etudiant,,"LOAD CSV WITH HEADERS FROM 'file:///students.csv' AS row
+CREATE (:Etudiant {
+    id:                 row.id,
+    age:                toInteger(row.age),
+    filiere:            row.filiere,
+    annee:              toInteger(row.annee),
+    logement:           row.logement,
+    stress_score:       toInteger(row.stress_score),
+    consomme_cannabis:  toLower(trim(row.consomme_cannabis)) IN [""true"", ""1"", ""oui""],
+    frequence_cannabis: row.frequence_cannabis
+});
+
+CREATE INDEX etudiant_id IF NOT EXISTS FOR (e:Etudiant) ON (e.id);",2,0,false
+groupe,,"LOAD CSV WITH HEADERS FROM 'file:///groups.csv' AS row
+CREATE (:Groupe {
+    group_id: row.group_id,
+    type:     row.type,
+    taille:   toInteger(row.taille)
+});
+
+CREATE INDEX groupe_id IF NOT EXISTS FOR (g:Groupe) ON (g.group_id);
+",3,0,false
+connait,,"LOAD CSV WITH HEADERS FROM 'file:///friendships.csv' AS row
+MATCH (a:Etudiant {id: row.source})
+MATCH (b:Etudiant {id: row.target})
+CREATE (a)-[:CONNAIT {
+    type:     row.type,
+    intensite: toInteger(row.intensite)
+}]->(b);
+",4,0,false
+appartientA,,"LOAD CSV WITH HEADERS FROM 'file:///memberships.csv' AS row
+MATCH (e:Etudiant  {id:       row.student_id})
+MATCH (g:Groupe    {group_id: row.group_id})
+CREATE (e)-[:APPARTIENT_A]->(g);
+
+",5,0,false
