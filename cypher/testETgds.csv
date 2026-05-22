@@ -1,68 +1,68 @@
 name,description,query,id,parentId,isFolder
 mesRequete,,,0,,true
-compteEtudiant,,MATCH (e:Etudiant) RETURN count(e) AS nb_etudiants;,1,0,false
-compteRelation,,MATCH ()-[r:CONNAIT]->() RETURN count(r) AS nb_relations;,2,0,false
-toutSuppr,,MATCH (n) DETACH DELETE n;,3,0,false
-statFiliere,,"MATCH (e:Etudiant)
+compteEtudiant,compter le nombre d'etudiant noeuds,MATCH (e:Etudiant) RETURN count(e) AS nb_etudiants;,1,0,false
+compteRelation,Pour compter le nombre de relation,MATCH ()-[r:CONNAIT]->() RETURN count(r) AS nb_relations;,2,0,false
+toutSuppr,supprimer tous les noeuds et relations,MATCH (n) DETACH DELETE n;,3,0,false
+statFiliere,Prevalence de consommation pour chaque filiere,"MATCH (e:Etudiant)
 RETURN e.filiere AS filiere,
        count(e) AS total,
        sum(CASE WHEN e.consomme_cannabis THEN 1 ELSE 0 END) AS consommateurs,
        round(100.0 * sum(CASE WHEN e.consomme_cannabis THEN 1 ELSE 0 END) / count(e), 1) AS pct
 ORDER BY pct DESC;",4,0,false
-top10Popu,,"MATCH (e:Etudiant)-[:CONNAIT]->()
+top10Popu,top 10 etudiants le plus connectes,"MATCH (e:Etudiant)-[:CONNAIT]->()
 RETURN e.id, e.filiere, e.logement, count(*) AS degree
 ORDER BY degree DESC
 LIMIT 10;
 ",5,0,false
-projectionGDSsocial,,"CALL gds.graph.project(
+projectionGDSsocial,projecter le graphe en memoire (requis avant tous algorithme GDS),"CALL gds.graph.project(
     'graphe_sociale',
     'Etudiant',
     {
         CONNAIT: { orientation: 'UNDIRECTED', properties: ['intensite'] }
     }
 );",6,0,false
-EcrirePR,,"CALL gds.pageRank.write('social_graph', {
+EcrirePR,Calculer et ecrire le pagerank sur chaque noeud,"CALL gds.pageRank.write('graphe_sociale', {
     writeProperty:  'pagerank',
     maxIterations:  20,
     dampingFactor:  0.85
 })
 YIELD nodePropertiesWritten, ranIterations;
 ",7,0,false
-dropProjection,,"CALL gds.graph.drop('graphe_sociale')
+dropProjection,supprimer la projection de la memoire GDS,"CALL gds.graph.drop('graphe_sociale')
 YIELD  graphName, nodeCount,relationshipCount ;",8,0,false
-topInfluenceur,,"MATCH (e:Etudiant)
+topInfluenceur,top 15 influenceurs par pagerank,"MATCH (e:Etudiant)
 RETURN e.id, e.filiere, e.logement,
        round(e.pagerank, 4) AS pagerank,
        e.consomme_cannabis
 ORDER BY pagerank DESC
 LIMIT 15;
 ",9,0,false
-GDSlouvain,,"CALL gds.louvain.write('graphe_sociale', {
+GDSlouvain,detecter les communautes avec l'algorithme de Louvain,"CALL gds.louvain.write('graphe_sociale', {
     writeProperty: 'communaute'
 })
 YIELD communityCount, modularity;",10,0,false
-dropLouvain,,"CALL gds.graph.drop('graphe_sociale')
+dropLouvain,effacer ce qui a ete ecrit par GDSlouvain,"CALL gds.graph.drop('graphe_sociale')
 YIELD graphName;",11,0,false
-louvainCOMM,,"MATCH (e:Etudiant)
+louvainCOMM,Distribution des communaute,"MATCH (e:Etudiant)
 RETURN e.communaute,
        count(e) AS taille,
        round(100.0 * sum(CASE WHEN e.consomme_cannabis THEN 1 ELSE 0 END) / count(e), 1) AS pct_cannabis
 ORDER BY taille DESC
 LIMIT 20;
 ",12,0,false
-ponts_comm,,"CALL gds.betweenness.write('graphe_sociale', {
+ponts_comm,calculer la betweenness centrality (ponts entre communautes),"CALL gds.betweenness.write('graphe_sociale', {
     writeProperty: 'betweenness'
 })
 YIELD nodePropertiesWritten;
 ",13,0,false
-voisinageCons,,"// Remplace 'S0001' par un id réel consommateur
+voisinageCons,voisinage d'un consommateur connu (a 2 sauts),"// Remplace 'S0001' par un id réel consommateur
 MATCH path = (seed:Etudiant {id: 'S0001'})-[:CONNAIT*1..2]-(voisin:Etudiant)
 WHERE voisin.id <> seed.id
 RETURN DISTINCT voisin.id,
                 voisin.consomme_cannabis,
                 length(path) AS distance
 ORDER BY distance, voisin.consomme_cannabis DESC;",14,0,false
-tauxLouvain,,"MATCH (e:Etudiant)
+tauxLouvain,taux de consommation par communaute Louvain,"MATCH (e:Etudiant)
 WITH e.communaute AS com,
      count(e) AS n,
      sum(CASE WHEN e.consomme_cannabis THEN 1 ELSE 0 END) AS conso
