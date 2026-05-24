@@ -179,6 +179,11 @@ L'onglet GDS contient les requetes pour les algorithmes de graphe.
 Executer d'abord projectionGDSsocial, puis les algorithmes dans
 l'ordre souhaite, et terminer par dropProjection.
 
+L'onglet incremental contient les requetes qui rend le base de donnee
+dynamique c'est a dire de la mis a jour des relations (ou groupes ou 
+etudiant ou comportement) , de supprimer les relations , ou visionner 
+aussi les relations ou les changements .
+
 **A droite -- les resultats**
 
 Le tableau affiche les resultats de chaque requete executee. Les
