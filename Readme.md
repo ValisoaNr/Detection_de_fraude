@@ -1,6 +1,6 @@
 # Détection de fraude par analyse de graphe
 
-Projet L2 MIT-MISA — Mai 2026
+Projet L2 — Mai 2026
 
 ## Description
 
@@ -19,25 +19,27 @@ projet/
 
 **Generer le graphe aleatoire :**
 ```bash
-python generation_graphe.py
+python3 generation_graphe.py
 ```
 
 Paramètres modifiables dans le `__main__` de generation\_graphe.py:
 - `n` : nombre de sommets
-- `alpha` : densité du graphe (défaut 2.0)
+- `alpha` : densité du graphe (par défaut 2.0)
 - `d_max` : degré maximum par sommet
 
 ## Étapes du projet
 
 1. Calcul de `p` selon `n`
 2. Construction de `G` aléatoirement selon `p`
-3. Vérification et correction de la connexité (BFS)
+3. Vérification et correction de la connexité (Parcours en largeur)
 4. Classification — détection des sous-graphes complets
 
 ## Dépendances
 
 Python 3.x — aucune bibliothèque externe requise pour le moment.
 
-## Auteur
+## Livrable de ce projet
+```url
+https://fr.overleaf.com/read/zfxnbgfhdbyr#b4d2ae
+```
 
-ANDRIAMIHARY Valisoa — L2 MIT-MISA
