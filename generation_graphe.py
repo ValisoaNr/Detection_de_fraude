@@ -61,9 +61,3 @@ def generer_graphe(n , alpha=2.0 , d_max=None):
     adj = corriger_connexite(n , adj)
     return adj
 
-
-if __name__ == "__main__":
-    n = 10000
-    g = generer_graphe(n , alpha=2.0)
-    for i , v in enumerate(g) :
-        print(f"{i} : {v}")

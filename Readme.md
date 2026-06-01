@@ -4,42 +4,69 @@ Projet L2 — Mai 2026
 
 ## Description
 
-Ce projet construit un graphe aléatoire connexe, non orienté et sans boucle, puis identifie tous les sous-graphes complets au sein de ce graphe. L'objectif final est de détecter des communautés suspectes dans un réseau.
+Ce projet est une construction de graphe aléatoire connexe, non orienté et sans boucle ; et d'identifier les sous-graphes complets au sein de ce graphe.
 
 ## Structure du projet
 
 ```
 projet/
 ├── generation_graphe.py   
-├── classification.py (en cours)
+├── classification.py
 └── README.md
 ```
 
 ## Utilisation
 
-**Generer le graphe aleatoire :**
-```bash
-python3 generation_graphe.py
-```
+**Générer le graphe aléatoire**
+La création de graphe aléatoire connexe , non orienté et sans boucle se fait par l'utilisation des fonctions dans `generation_graphe.py`.
 
-Paramètres modifiables dans le `__main__` de generation\_graphe.py:
-- `n` : nombre de sommets
-- `alpha` : densité du graphe (par défaut 2.0)
-- `d_max` : degré maximum par sommet
+**Classifier les sommets du graphe**
+La classification des sommets et la détection des sous-graphes complets se fait via `classification.py`.
+
+```python
+from generation_graphe import generer_graphe
+from classification import classification
+
+adj = generer_graphe(n=10)
+couleur , cliques = classification(adj, n=10)
+
+for i , c in enumerate(couleur):
+    print(f"sommet {i} -> couleur {c}")
+for cl in cliques:
+    print(f"clique : {sorted(cl)}")
+```
 
 ## Étapes du projet
 
 1. Calcul de `p` selon `n`
 2. Construction de `G` aléatoirement selon `p`
-3. Vérification et correction de la connexité (Parcours en largeur)
-4. Classification — détection des sous-graphes complets
+3. Vérification et correction de la connexité (parcours en largeur)
+4. Classification — coloration gloutonne et détection des sous-graphes complets
+
+## Détail des fonctions
+
+### `generation_graphe.py`
+
+| Fonction | Rôle |
+|---|---|
+| `calculer_p(n , alpha)` | Calcule la probabilité d'arête selon `n` |
+| `ajouter_aretes(n , p , d_max)` | Construit le graphe aléatoire |
+| `corriger_connexite(n , adj)` | Garantit la connexité par BFS |
+| `generer_graphe(n , alpha , d_max)` | Fonction principale — retourne `adj` |
+
+### `classification.py`
+
+| Fonction | Rôle |
+|---|---|
+| `tous_voisins(v , candidats , adj_sets)` | Vérifie que `v` est voisin de chaque sommet dans `candidats` |
+| `classification(adj , n)` | Coloration gloutonne + détection des cliques |
 
 ## Dépendances
 
-Python 3.x — aucune bibliothèque externe requise pour le moment.
+Python 3.x — aucune bibliothèque externe requise.
 
 ## Livrable de ce projet
-```url
+
+```
 https://fr.overleaf.com/read/zfxnbgfhdbyr#b4d2ae
 ```
-
