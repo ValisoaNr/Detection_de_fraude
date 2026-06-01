@@ -27,8 +27,8 @@ La classification des sommets et la détection des sous-graphes complets se fait
 from generation_graphe import generer_graphe
 from classification import classification
 
-adj = generer_graphe(n=10)
-couleur , cliques = classification(adj, n=10)
+adj = generer_graphe(n=1000)
+couleur , cliques = classification(adj, n=1000)
 
 for i , c in enumerate(couleur):
     print(f"sommet {i} -> couleur {c}")
