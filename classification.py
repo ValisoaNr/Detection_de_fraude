@@ -1,35 +1,55 @@
-def tous_voisins(v , candidats , adj_sets) :
-    # Pour verifier si tous ce qui est dans candidats est voisin de v
-    for w in candidats :
-        if v not in adj_sets[w] :
-            return False
-    return True
+def cliques_rec(R , P , X , adj_sets , cliques) :
+    if len(P) == 0 and len(X) == 0 :
+        if len(R) >= 3 :
+            cliques.append(R.copy())
+        return
+
+    union_P_X = P.union(X)
+    pivot = -1
+    meilleur_score = -1
+    for v in union_P_X :
+        score = 0
+        for voisin in adj_sets[v] :
+            if voisin in P :
+                score = score + 1
+        if score > meilleur_score :
+            meilleur_score = score
+            pivot = v
+
+    non_voisins_pivot = P.difference(adj_sets[pivot])
+    for v in list(non_voisins_pivot) :
+        nouveau_R = R.union({v})
+        nouveau_P = P.intersection(adj_sets[v])
+        nouveau_X = X.intersection(adj_sets[v])
+
+        cliques_rec(nouveau_R , nouveau_P , nouveau_X , adj_sets , cliques)
+        P.remove(v)
+        X.add(v)
+
 
 def classification(adj , n) :
-    couleur = [-1] * n
-    for i in range(n) :
-        interdites = set()
-        for v in adj[i] :
-            if couleur[v] != -1 :
-                interdites.add(couleur[v])
-        c = 0
-        while c in interdites :
-            c = c + 1
-        couleur[i] = c
+    def nombre_de_voisins(sommet) :
+        return len(adj[sommet])
 
-    cliques = []
+    sommets_tries = sorted(range(n) , key=nombre_de_voisins , reverse=True)
+    couleur = [-1] * n
+    for u in sommets_tries :
+        couleurs_interdites = set()
+        for v in adj[u] :
+            if couleur[v] != -1 :
+                couleurs_interdites.add(couleur[v])
+
+        c = 0
+        while c in couleurs_interdites:
+            c = c + 1
+        couleur[u] = c
+
     adj_sets = []
     for voisins in adj :
         adj_sets.append(set(voisins))
 
-    for i in range(n) :
-        candidats = {i}
-        for v in adj[i] :
-            if v <= i :
-                continue
-            if tous_voisins(v, candidats, adj_sets) :
-                candidats.add(v)
-        if len(candidats) >= 2 :
-            cliques.append(candidats)
+    cliques = []
+    tous_les_sommets = set(range(n))
+    cliques_rec(set() , tous_les_sommets, set() , adj_sets , cliques)
 
     return couleur , cliques
